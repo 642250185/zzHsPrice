@@ -2,32 +2,28 @@ const _ = require('lodash');
 const _path = require('path');
 const fs = require('fs-extra');
 const request = require('superagent');
-const config = require('../../config');
+const config = require('./config');
 const xlsx = require('node-xlsx').default;
 const sleep = require('js-sleep/js-sleep');
-const obj  = xlsx.parse('./file/zz/zzISBN.xlsx');
+const obj  = xlsx.parse('./file/20.xlsx');
 const {formatDate} = require('./util/dateUtil');
 
-const {PPU, domain, openRoute, addCartPath, bookCartListPath, delRecyclePath, bookDataPath, exportPath} = config.zz;
+const {PPU, domain, openRoute, addCartPath, bookCartListPath, delRecyclePath, exportPath} = config.zz;
 
 let isbnList = [];
-Object.keys(obj).forEach(function(key)
-{
+Object.keys(obj).forEach(function(key) {
     obj[key].data.forEach(function(item){
-
         isbnList.push(item[0]);
     });
 });
 
 let cookie;
-const formatCookie = () =>
-{
+const formatCookie = () => {
     cookie = `PPU="${PPU}"`;
     console.info('cookie: ', cookie);
 };
 
-const addCart = async (isbn) =>
-{
+const addCart = async (isbn) => {
     try {
         let result = await request.get(`${domain}${openRoute}${addCartPath}?isbn=${isbn}&zzFrom=APP_syfbtc_shoushu&featureId=`)
             .set('Cookie', cookie);
@@ -46,8 +42,7 @@ const addCart = async (isbn) =>
     }
 };
 
-const delBookByIsbn = async (isbn) =>
-{
+const delBookByIsbn = async (isbn) => {
     try {
         let result = await request.get(`${domain}${openRoute}${delRecyclePath}?isbn=${isbn}`)
             .set('Cookie', cookie);
@@ -66,8 +61,7 @@ const delBookByIsbn = async (isbn) =>
     }
 };
 
-const getBookInfo = async () =>
-{
+const getBookInfo = async () => {
     try {
         // 获取该ISBN书籍的信息
         let result = await request.get(`${domain}${openRoute}${bookCartListPath}`)
@@ -100,8 +94,7 @@ const getBookInfo = async () =>
     }
 };
 
-const getBookPrice = async (isbn) =>
-{
+const getBookPrice = async (isbn) => {
     try {
         // 加入到回收车
         await addCart(isbn);
@@ -120,8 +113,7 @@ const getBookPrice = async (isbn) =>
     }
 };
 
-const getAllBookPrice = async () =>
-{
+const getAllBookPrice = async () => {
     try {
         let count = 0;
 
@@ -137,8 +129,8 @@ const getAllBookPrice = async () =>
         }
 
         console.info('resultList.Size: %d', resultList.length);
-        await fs.ensureDir(_path.join(bookDataPath, '..'));
-        fs.writeFileSync(bookDataPath, JSON.stringify(resultList, null, 4));
+        // await fs.ensureDir(_path.join(bookDataPath, '..'));
+        // fs.writeFileSync(bookDataPath, JSON.stringify(resultList, null, 4));
         return resultList;
     } catch (e) {
         console.error(e);
@@ -146,8 +138,7 @@ const getAllBookPrice = async () =>
     }
 };
 
-const exportExcel = async () =>
-{
+const exportExcel = async () => {
     try {
         const booksPrice = await getAllBookPrice();
         console.info(`${booksPrice.length} 条书籍价格信息`);
@@ -170,7 +161,6 @@ const exportExcel = async () =>
         }
         const currentTime = formatDate(new Date(), 'YYYY-MM-DD-HH');
         const filename = `${exportPath}/zzBooksPrice-${currentTime}.xlsx`;
-        console.info('filename: ', filename);
         fs.writeFileSync(filename, xlsx.build([
             {name: '转转书籍回收价', data: zzBooksPriceExcel},
         ]));
