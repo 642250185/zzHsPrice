@@ -5,7 +5,7 @@ const request = require('superagent');
 const config = require('./config');
 const xlsx = require('node-xlsx').default;
 const sleep = require('js-sleep/js-sleep');
-const obj  = xlsx.parse('./file/20.xlsx');
+const obj  = xlsx.parse('./zz.xlsx');
 const {formatDate} = require('./util/dateUtil');
 
 const {PPU, domain, openRoute, addCartPath, bookCartListPath, delRecyclePath, exportPath} = config.zz;
@@ -116,10 +116,7 @@ const getBookPrice = async (isbn) => {
 const getAllBookPrice = async () => {
     try {
         let count = 0;
-
-        // 格式化Cookie
         formatCookie();
-
         let resultList = [];
         for(let isbn of isbnList){
             ++count;
@@ -127,10 +124,7 @@ const getAllBookPrice = async () => {
             const blist = await getBookPrice(isbn);
             resultList = resultList.concat(blist);
         }
-
         console.info('resultList.Size: %d', resultList.length);
-        // await fs.ensureDir(_path.join(bookDataPath, '..'));
-        // fs.writeFileSync(bookDataPath, JSON.stringify(resultList, null, 4));
         return resultList;
     } catch (e) {
         console.error(e);
