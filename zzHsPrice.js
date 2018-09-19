@@ -68,10 +68,11 @@ const getBookInfo = async () => {
             .set('Cookie', cookie);
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
-        const books = respData.cartList;
+        // const books = respData.cartList;  // 旧返回(遗弃)
+        const books = respData.rejectedList; // 新返回
+        console.info(`respCode: ${respCode}, errorMsg: ${errorMsg} books.Size: ${books.length}`);
         const bookList = [];
         for(let book of books){
-            console.info('book: ', book);
             bookList.push({
                 isbn13          : book.isbn13,
                 bookId          : book.bookId,
@@ -120,6 +121,7 @@ const getAllBookPrice = async () => {
         let resultList = [];
         for(let isbn of isbnList){
             ++count;
+            await sleep(1000 * 2);
             console.info('count: >> ', count);
             const blist = await getBookPrice(isbn);
             resultList = resultList.concat(blist);
