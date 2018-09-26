@@ -25,34 +25,19 @@ const formatCookie = () => {
 
 const addCart = async (isbn) => {
     try {
-        let result = await request.get(`${domain}${openRoute}${addCartPath}?isbn=${isbn}&zzFrom=APP_syfbtc_shoushu&featureId=`)
-            .set('Cookie', cookie);
+        // 旧API
+        // const path = `${domain}${openRoute}${addCartPath}?isbn=${isbn}&zzFrom=APP_syfbtc_shoushu&featureId=`;
+        // 新API
+        const path = `${domain}${openRoute}${addCartPath}?isbn=${isbn}&zzFrom=ppzq&activityId=10006`;
+        console.info('addCartPath: ', path);
+        let result = await request.get(path).set('Cookie', cookie);
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
         if(respCode === 0){
-            console.info(`ISBN: ${isbn} >> 加入回收车成功 %j`, respData);
+            console.info(`ISBN: ${isbn} >> 加入回收车成功 respData: %j`, respData);
             return true;
         } else {
-            console.error(`ISBN: ${isbn} >> 加入回收车失败 %j`, errorMsg);
-            return false;
-        }
-    } catch (e) {
-        console.error(e);
-        return e;
-    }
-};
-
-const delBookByIsbn = async (isbn) => {
-    try {
-        let result = await request.get(`${domain}${openRoute}${delRecyclePath}?isbn=${isbn}`)
-            .set('Cookie', cookie);
-        result = JSON.parse(result.text);
-        const {respCode, respData, errorMsg} = result;
-        if(respCode === 0){
-            console.info(`ISBN: ${isbn} >> 从回收车删除成功 ${errorMsg}`);
-            return true;
-        } else {
-            console.error(`ISBN: ${isbn} >> 从回收车删除失败 ${errorMsg}`);
+            console.error(`ISBN: ${isbn} >> 加入回收车失败 errorMsg: %j`, errorMsg);
             return false;
         }
     } catch (e) {
@@ -64,14 +49,24 @@ const delBookByIsbn = async (isbn) => {
 const getBookInfo = async () => {
     try {
         // 获取该ISBN书籍的信息
-        let result = await request.get(`${domain}${openRoute}${bookCartListPath}`)
-            .set('Cookie', cookie);
+        // 旧API
+        // const path = `${domain}${openRoute}${bookCartListPath}?activityId=10003`;
+        // 新API
+        const bookList = [];
+        const path = `${domain}${openRoute}${bookCartListPath}?randrom=1537930765237&activityId=10006`;
+        console.info('bookInfo_path: ', path);
+        let result = await request.get(path).set('Cookie', cookie);
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
+        if(respCode === -2 && _.isEmpty(respData)){
+            console.warn('警告: 未采集到书籍的任何数据！');
+            return bookList;
+        }
+        console.info(`respCode: ${respCode}, errorMsg: ${errorMsg} respData: %j`, respData);
         // const books = respData.cartList;  // 旧返回(遗弃)
         const books = respData.rejectedList; // 新返回
-        console.info(`respCode: ${respCode}, errorMsg: ${errorMsg} books.Size: ${books.length}`);
-        const bookList = [];
+        console.info(`books.Size: ${books.length}`);
+
         for(let book of books){
             bookList.push({
                 isbn13          : book.isbn13,
@@ -92,6 +87,25 @@ const getBookInfo = async () => {
     } catch (e) {
         console.error(e);
         return [];
+    }
+};
+
+const delBookByIsbn = async (isbn) => {
+    try {
+        const path = `${domain}${openRoute}${delRecyclePath}?isbn=${isbn}`;
+        let result = await request.get(path).set('Cookie', cookie);
+        result = JSON.parse(result.text);
+        const {respCode, respData, errorMsg} = result;
+        if(respCode === 0){
+            console.info(`ISBN: ${isbn} >> 从回收车删除成功 ${errorMsg}`);
+            return true;
+        } else {
+            console.error(`ISBN: ${isbn} >> 从回收车删除失败 ${errorMsg}`);
+            return false;
+        }
+    } catch (e) {
+        console.error(e);
+        return e;
     }
 };
 
