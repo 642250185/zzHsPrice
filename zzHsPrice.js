@@ -29,7 +29,6 @@ const addCart = async (isbn) => {
         // const path = `${domain}${openRoute}${addCartPath}?isbn=${isbn}&zzFrom=APP_syfbtc_shoushu&featureId=`;
         // 新API
         const path = `${domain}${openRoute}${addCartPath}?isbn=${isbn}&zzFrom=ppzq&activityId=10006`;
-        console.info('addCartPath: ', path);
         let result = await request.get(path).set('Cookie', cookie);
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
@@ -54,7 +53,6 @@ const getBookInfo = async () => {
         // 新API
         const bookList = [];
         const path = `${domain}${openRoute}${bookCartListPath}?randrom=1537930765237&activityId=10006`;
-        console.info('bookInfo_path: ', path);
         let result = await request.get(path).set('Cookie', cookie);
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
