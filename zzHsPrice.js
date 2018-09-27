@@ -5,10 +5,10 @@ const config = require('./config');
 const request = require('superagent');
 const xlsx = require('node-xlsx').default;
 const sleep = require('js-sleep/js-sleep');
-const obj  = xlsx.parse('./zzt.xlsx');
+const obj  = xlsx.parse('./2w.xlsx');
 const {formatDate} = require('./util/dateUtil');
 
-const {PPU, domain, openRoute, addCartPath, bookCartListPath, delRecyclePath, exportPath} = config.zz;
+const {PPU, domain, openRoute, addCartPath, bookCartListPath, delRecyclePath, exportPath, coverDataPath} = config.zz;
 
 let isbnList = [];
 Object.keys(obj).forEach(function(key) {
@@ -18,6 +18,7 @@ Object.keys(obj).forEach(function(key) {
 });
 
 let cookie;
+const SLEEP_TIME = 5;
 const formatCookie = () => {
     cookie = `PPU="${PPU}"`;
     console.info('cookie: ', cookie);
@@ -109,17 +110,15 @@ const delBookByIsbn = async (isbn) => {
 
 const getBookPrice = async (isbn) => {
     try {
+        // 休眠时间
+        await sleep(1000 * SLEEP_TIME);
         // 加入到回收车
         await addCart(isbn);
-
         // 获取回收车中书籍信息
         const bookList = await getBookInfo();
-
         // 从回收车中删除
         await delBookByIsbn(isbn);
-
         return bookList;
-
     } catch (e) {
         console.error(e);
         return [];
@@ -133,15 +132,34 @@ const getAllBookPrice = async () => {
         let resultList = [];
         for(let isbn of isbnList){
             ++count;
-            await sleep(1000 * 15);
             console.info('count: >> ', count);
             const blist = await getBookPrice(isbn);
             resultList = resultList.concat(blist);
+            console.info(`休眠 ${SLEEP_TIME} 秒`);
         }
         console.info('resultList.Size: %d', resultList.length);
         return resultList;
     } catch (e) {
         console.error(e);
+        return [];
+    }
+};
+
+const filterCover = async (covers) => {
+    try {
+        const final = [];
+        const map = new Map();
+        for(let item of covers){
+            let _item = map.get(item.cover);
+            if(!_item){
+                map.set(item.cover, item);
+            }
+        }
+        for(let [key, value] of map.entries()){
+            final.push(value);
+        }
+        return final;
+    } catch (e) {
         return [];
     }
 };
@@ -152,9 +170,12 @@ const getCover = async () => {
         console.info(`${booksPrice.length} 条书籍价格信息`);
         const covers = [];
         for(let item of booksPrice){
-            covers.push({cover: item.cover});
+            covers.push({isbn: item.isbn13, cover: item.cover});
         }
-        return covers;
+        const coverInfo = await filterCover(covers);
+        await fs.ensureDir(_path.join(coverDataPath, '..'));
+        fs.writeFileSync(coverDataPath, JSON.stringify(coverInfo, null, 4));
+        return coverInfo;
     } catch (e) {
         console.error(e);
         return [];
@@ -194,10 +215,4 @@ const exportExcel = async () => {
     }
 };
 
-const test = async () => {
-    const r = await getCover();
-    console.info('r.size: %d, r: %j ', r.length, r);
-};
-
-
-test();
+exports.getCover = getCover;
