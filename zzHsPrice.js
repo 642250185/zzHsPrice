@@ -1,11 +1,11 @@
 const _ = require('lodash');
 const _path = require('path');
 const fs = require('fs-extra');
-const request = require('superagent');
 const config = require('./config');
+const request = require('superagent');
 const xlsx = require('node-xlsx').default;
 const sleep = require('js-sleep/js-sleep');
-const obj  = xlsx.parse('./zz.xlsx');
+const obj  = xlsx.parse('./zzt.xlsx');
 const {formatDate} = require('./util/dateUtil');
 
 const {PPU, domain, openRoute, addCartPath, bookCartListPath, delRecyclePath, exportPath} = config.zz;
@@ -33,10 +33,10 @@ const addCart = async (isbn) => {
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
         if(respCode === 0){
-            console.info(`ISBN: ${isbn} >> 加入回收车成功 respData: %j`, respData);
+            console.info(`ISBN: ${isbn}, 加入回收车成功`);
             return true;
         } else {
-            console.error(`ISBN: ${isbn} >> 加入回收车失败 errorMsg: %j`, errorMsg);
+            console.error(`ISBN: ${isbn}, 加入回收车失败`);
             return false;
         }
     } catch (e) {
@@ -60,7 +60,7 @@ const getBookInfo = async () => {
             console.warn('警告: 未采集到书籍的任何数据！');
             return bookList;
         }
-        console.info(`respCode: ${respCode}, errorMsg: ${errorMsg} respData: %j`, respData);
+        console.info(`respCode: ${respCode}, errorMsg: ${errorMsg}`);
         // const books = respData.cartList;  // 旧返回(遗弃)
         const books = respData.rejectedList; // 新返回
         console.info(`books.Size: ${books.length}`);
@@ -95,10 +95,10 @@ const delBookByIsbn = async (isbn) => {
         result = JSON.parse(result.text);
         const {respCode, respData, errorMsg} = result;
         if(respCode === 0){
-            console.info(`ISBN: ${isbn} >> 从回收车删除成功 ${errorMsg}`);
+            console.info(`ISBN: ${isbn} >> 从回收车删除成功 errorMsg: ${errorMsg}`);
             return true;
         } else {
-            console.error(`ISBN: ${isbn} >> 从回收车删除失败 ${errorMsg}`);
+            console.error(`ISBN: ${isbn} >> 从回收车删除失败 errorMsg: ${errorMsg}`);
             return false;
         }
     } catch (e) {
@@ -133,13 +133,28 @@ const getAllBookPrice = async () => {
         let resultList = [];
         for(let isbn of isbnList){
             ++count;
-            await sleep(1000 * 2);
+            await sleep(1000 * 15);
             console.info('count: >> ', count);
             const blist = await getBookPrice(isbn);
             resultList = resultList.concat(blist);
         }
         console.info('resultList.Size: %d', resultList.length);
         return resultList;
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
+
+const getCover = async () => {
+    try {
+        const booksPrice = await getAllBookPrice();
+        console.info(`${booksPrice.length} 条书籍价格信息`);
+        const covers = [];
+        for(let item of booksPrice){
+            covers.push({cover: item.cover});
+        }
+        return covers;
     } catch (e) {
         console.error(e);
         return [];
@@ -179,4 +194,10 @@ const exportExcel = async () => {
     }
 };
 
-exportExcel();
+const test = async () => {
+    const r = await getCover();
+    console.info('r.size: %d, r: %j ', r.length, r);
+};
+
+
+test();
