@@ -10,7 +10,7 @@ const downloadImages = async (item) => {
         ++i;
         const url = item.cover;
         let filename = url.substring(url.indexOf("_")-1, url.indexOf("?")-4);
-        const path  = `${downloadPath}/${filename}.jpg`;
+        const path  = `${downloadPath}/${item.isbn}-${filename}.jpg`;
         await request(url).pipe(fs.createWriteStream(path))
             .on('close', () =>{
                 console.info(`[${i}] >> ${item.isbn} ${filename}.jpg Download Success!`);

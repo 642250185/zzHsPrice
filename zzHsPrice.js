@@ -130,6 +130,7 @@ const getAllBookPrice = async () => {
         let count = 0;
         formatCookie();
         let resultList = [];
+        console.info('isbnSum: >> ', isbnList.length);
         for(let isbn of isbnList){
             ++count;
             console.info('count: >> ', count);
